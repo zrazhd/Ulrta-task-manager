@@ -12,6 +12,7 @@ type ProjectRepo interface {
 	DeleteProject(projectID string) error
 	FindProjectByID(projectID string) (*domain.Project, error)
 	AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error)
+	AddParticipantToProject(projectID, userName string) error
 }
 
 type ProjectService struct {
@@ -39,12 +40,7 @@ func (ps *ProjectService) CreateProject(title, description, owner string) (*doma
 }
 
 func (ps *ProjectService) DeleteProject(projectID string) error {
-	err := ps.repo.DeleteProject(projectID)
-	if err != nil {
-		return errors.New("Can't delete project")
-	}
-
-	return nil
+	return ps.repo.DeleteProject(projectID)
 }
 
 func (ps *ProjectService) FindByID(projectID string) (*domain.Project, error) {
@@ -53,4 +49,8 @@ func (ps *ProjectService) FindByID(projectID string) (*domain.Project, error) {
 
 func (ps *ProjectService) AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error) {
 	return ps.repo.AddTaskToProject(projectID, task)
+}
+
+func (ps *ProjectService) AddPersonToProject(projectID, userName string) error {
+	return ps.repo.AddParticipantToProject(projectID, userName)
 }

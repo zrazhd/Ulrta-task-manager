@@ -1,11 +1,11 @@
-package http
+package httpHandler
 
-type userRepo interface{
-	
+import "github.com/zrazhd/Ulrta-task-manager/internal/usecase"
+
+type UserHandler struct {
+	service *usecase.UserService
 }
 
-type userHandler struct{
-
+func NewUserHandler(service *usecase.UserService) *UserHandler {
+	return &UserHandler{service: service}
 }
-
-func RegisterUser

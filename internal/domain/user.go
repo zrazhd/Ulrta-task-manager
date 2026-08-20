@@ -7,6 +7,7 @@ import (
 type User struct {
 	UserID   string
 	Name     string
+	UserName string
 	Email    string
 	Password string
 	Projects []Project
@@ -15,6 +16,9 @@ type User struct {
 func (u *User) ValidateUser() error {
 	if u.Name == "" {
 		return errors.New("There is no name")
+	}
+	if u.UserName == "" {
+		return errors.New("There is no UserName")
 	}
 	if u.Email == "" {
 		return errors.New("There is no email")

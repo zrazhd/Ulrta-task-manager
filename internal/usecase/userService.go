@@ -12,6 +12,7 @@ import (
 type UserRepo interface {
 	SaveUser(user *domain.User) error
 	FindByEmail(email string) (*domain.User, error)
+	FindByUserName(UserName string) (*domain.User, error)
 }
 
 type UserService struct {
@@ -66,4 +67,8 @@ func (userService *UserService) LoginUser(email, password string) (*domain.User,
 
 	return user, nil
 
+}
+
+func (userService *UserService) FindUserByUserName(UserName string) (*domain.User, error) {
+	return userService.repo.FindByUserName(UserName)
 }
