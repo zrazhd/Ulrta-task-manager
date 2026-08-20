@@ -1,40 +1,69 @@
 package usecase
 
 import (
-	"errors"
 	"fmt"
+	"sync"
 
+	"github.com/google/uuid"
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserRepo interface {
-	FindByID(userID string) (*domain.User, error)
+	SaveUser(user *domain.User) error
+	FindByEmail(email string) (*domain.User, error)
 }
 
 type UserService struct {
-	ur UserRepo
+	repo UserRepo
+	mu   sync.Mutex
 }
 
-func NewUserService(ur UserRepo) *UserService {
-	return &UserService{ur: ur}
+func NewUserService(repo UserRepo) *UserService {
+	return &UserService{repo: repo}
 }
 
-func (us *UserService) RegisterUser(u *domain.User) (*domain.User, error) {
-	err := u.ValidateUser()
-	if err != nil {
-		return &domain.User{}, fmt.Errorf("can't register user: %w", err)
-	}
-
-	_, err = us.ur.FindByID(u.UserID)
+func (us *UserService) RegisterUser(name, email, password string) (*domain.User, error) {
+	us.mu.Lock()
+	defer us.mu.Unlock()
+	_, err := us.repo.FindByEmail(email)
 	if err == nil {
-		return &domain.User{}, errors.New("User already exists")
+		return nil, fmt.Errorf("User already exists: %w", err)
 	}
 
-	return &domain.User{}, nil
+	newPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("Hashing password went wrong: %w", err)
+	}
+
+	user := domain.User{
+		UserID:   uuid.NewString(),
+		Name:     name,
+		Email:    email,
+		Password: string(newPassword),
+		Projects: make([]domain.Project, 0),
+	}
+	user.Password = string(newPassword)
+
+	err = us.repo.SaveUser(&user)
+	if err != nil {
+		return nil, fmt.Errorf("Can't register user: %w", err)
+	}
+	return &user, nil
 
 }
 
-func LoginUser(email, password string) (*domain.User, error) {
-	return &domain.User{}, nil
+func (userService *UserService) LoginUser(email, password string) (*domain.User, error) {
+	user, err := userService.repo.FindByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("user not registered: %w", err)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, fmt.Errorf("Wrong password or email: %w", err)
+	}
+
+	return user, nil
 
 }
