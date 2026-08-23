@@ -1,4 +1,4 @@
-package http
+package httpHandler
 
 import (
 	"encoding/json"
@@ -13,15 +13,15 @@ type TaskHandler struct {
 	service *usecase.TaskService
 }
 
-func NewProjectHandler(service usecase.TaskService) *TaskHandler {
-	return &TaskHandler{service: &service}
+func NewTaskHandler(service *usecase.TaskService) *TaskHandler {
+	return &TaskHandler{service: service}
 }
 
 type CreateTaskReq struct {
-	Title       string
-	Description string
-	Performer   string
-	Deadline    time.Time
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Performer   string    `json:"performer"`
+	Deadline    time.Time `json:"deadline"`
 }
 
 func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -46,16 +46,9 @@ func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (th *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		taskID string
-	}
+	taskID := r.PathValue("id")
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	task, err := th.service.DeleteTaskByID(req.taskID)
+	task, err := th.service.DeleteTaskByID(taskID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -69,17 +62,10 @@ func (th *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (th *TaskHandler) FindTask(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		taskID string
-	}
+func (th *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
+	taskID := r.PathValue("id")
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	task, err := th.service.FindTask(req.taskID)
+	task, err := th.service.FindTask(taskID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -94,10 +80,10 @@ func (th *TaskHandler) FindTask(w http.ResponseWriter, r *http.Request) {
 
 func (th *TaskHandler) AddCommentToTask(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TaskID  string
-		Sender  string
-		Message string
+		Sender  string `json:"sender"`
+		Message string `json:"message"`
 	}
+	taskID := r.PathValue("id")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -108,7 +94,7 @@ func (th *TaskHandler) AddCommentToTask(w http.ResponseWriter, r *http.Request) 
 		Message: req.Message,
 	}
 
-	task, err := th.service.AddCommentToTask(req.TaskID, &com)
+	task, err := th.service.AddCommentToTask(taskID, &com)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -123,16 +109,16 @@ func (th *TaskHandler) AddCommentToTask(w http.ResponseWriter, r *http.Request) 
 
 func (th *TaskHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TaskID string
-		Status string
+		Status string `json:"status"`
 	}
+	taskID := r.PathValue("id")
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := th.service.UpdateStatus(req.TaskID, req.Status); err != nil {
+	if err := th.service.UpdateStatus(taskID, req.Status); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

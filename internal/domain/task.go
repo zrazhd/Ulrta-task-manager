@@ -6,7 +6,7 @@ import (
 )
 
 type Task struct {
-	TaksID      string
+	TaskID      string
 	Title       string
 	Description string
 	Performer   string

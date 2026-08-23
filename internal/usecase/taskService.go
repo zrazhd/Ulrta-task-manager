@@ -26,11 +26,11 @@ func NewTaskService(repo TaskRepo) *TaskService {
 
 func (ts *TaskService) CreateTask(title, description, performer string, deadline time.Time) (*domain.Task, error) {
 	task := &domain.Task{
-		TaksID:      uuid.NewString(),
+		TaskID:      uuid.NewString(),
 		Title:       title,
 		Description: description,
 		Performer:   performer,
-		Status:      "created",
+		Status:      "to do",
 		Deadline:    deadline,
 	}
 

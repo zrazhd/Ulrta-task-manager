@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
@@ -33,7 +33,7 @@ func (ps *ProjectService) CreateProject(title, description, owner string) (*doma
 
 	err := ps.repo.SaveProject(project)
 	if err != nil {
-		return &domain.Project{}, errors.New("Can't save project")
+		return &domain.Project{}, fmt.Errorf("Can't save project: %w", err)
 	}
 
 	return project, nil

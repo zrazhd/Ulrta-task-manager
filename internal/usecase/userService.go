@@ -25,13 +25,6 @@ func NewUserService(repo UserRepo) *UserService {
 }
 
 func (us *UserService) RegisterUser(name, email, password string) (*domain.User, error) {
-	us.mu.Lock()
-	defer us.mu.Unlock()
-	_, err := us.repo.FindByEmail(email)
-	if err == nil {
-		return nil, fmt.Errorf("User already exists: %w", err)
-	}
-
 	newPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("Hashing password went wrong: %w", err)
@@ -44,7 +37,6 @@ func (us *UserService) RegisterUser(name, email, password string) (*domain.User,
 		Password: string(newPassword),
 		Projects: make([]domain.Project, 0),
 	}
-	user.Password = string(newPassword)
 
 	err = us.repo.SaveUser(&user)
 	if err != nil {
