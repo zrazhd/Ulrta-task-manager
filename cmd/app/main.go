@@ -25,6 +25,10 @@ func main() {
 	taskService := usecase.NewTaskService(repo)
 	taskHandler := httpHandler.NewTaskHandler(taskService)
 
+	userRepo := repository.NewUserRepo(pool)
+	userService := usecase.NewUserService(userRepo)
+	userHandler := httpHandler.NewUserHandler(userService)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /task", taskHandler.CreateTask)
@@ -32,6 +36,10 @@ func main() {
 	mux.HandleFunc("DELETE /task/{id}", taskHandler.DeleteTask)
 	mux.HandleFunc("PATCH /task/{id}/comment", taskHandler.AddCommentToTask)
 	mux.HandleFunc("PATCH /task/{id}/status", taskHandler.UpdateStatus)
+
+	mux.HandleFunc("POST /register", userHandler.Register)
+	mux.HandleFunc("POST /login", userHandler.Login)
+	mux.HandleFunc("GET /users/{id}", userHandler.GetUser)
 
 	fmt.Println("Listening port :8080")
 	err = http.ListenAndServe(":8080", mux)

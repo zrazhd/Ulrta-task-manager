@@ -31,6 +31,10 @@ func (ps *ProjectService) CreateProject(title, description, owner string) (*doma
 		Owner:       owner,
 	}
 
+	if err := project.ValidateProject(); err != nil {
+		return nil, fmt.Errorf("Invalid project: %w", err)
+	}
+
 	err := ps.repo.SaveProject(project)
 	if err != nil {
 		return &domain.Project{}, fmt.Errorf("Can't save project: %w", err)

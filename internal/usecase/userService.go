@@ -37,6 +37,9 @@ func (us *UserService) RegisterUser(name, email, password string) (*domain.User,
 		Password: string(newPassword),
 		Projects: make([]domain.Project, 0),
 	}
+	if err = user.ValidateUser(); err != nil {
+		return nil, fmt.Errorf("Invalid user: %w", err)
+	}
 
 	err = us.repo.SaveUser(&user)
 	if err != nil {

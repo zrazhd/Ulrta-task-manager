@@ -8,7 +8,7 @@ type Project struct {
 	Description  string
 	Owner        string
 	Tasks        []Task
-	Participants []User
+	Participants []string
 }
 
 func (p *Project) ValidateProject() error {
