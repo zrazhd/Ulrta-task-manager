@@ -19,19 +19,41 @@ func NewProjectRepo(db *pgxpool.Pool) *ProjectRepo {
 
 func (repo *ProjectRepo) SaveProject(p *domain.Project) error {
 
-	sqlStr := `INSERT INTO projects (id, title, description, owner) VALUES($1, $2, $3, $4)`
+	sqlStr := `INSERT INTO projects (id, title, description, owner, tasks, participants) VALUES($1, $2, $3, $4, $5, $6)`
 
-	_, err := repo.db.Exec(context.Background(), sqlStr, p.ProjectID, p.Title, p.Description, p.Owner)
+	tasks, err := json.Marshal(p.Tasks)
+	if err != nil {
+		return fmt.Errorf("cant marshal task creating project: %w", err)
+	}
+
+	participants, err := json.Marshal(p.Participants)
+	if err != nil {
+		return fmt.Errorf("cant marshal participants creating project: %w", err)
+	}
+
+	_, err = repo.db.Exec(context.Background(), sqlStr, p.ProjectID, p.Title, p.Description, p.Owner, tasks, participants)
 
 	return err
 }
-func (repo *ProjectRepo) DeleteProject(projectID string) error {
+func (repo *ProjectRepo) DeleteProject(projectID string) (*domain.Project, error) {
 
-	sqlStr := `DELETE FROM projects WHERE id = $1`
+	sqlStr := `DELETE FROM projects WHERE id = $1 RETURNING *`
 
-	_, err := repo.db.Exec(context.Background(), sqlStr, projectID)
+	var project domain.Project
+	var rawTasks []byte
+	var rawParticipants []byte
 
-	return err
+	err := repo.db.QueryRow(context.Background(), sqlStr, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &rawParticipants)
+
+	if err = json.Unmarshal(rawTasks, &project.Tasks); err != nil {
+		return nil, fmt.Errorf("cant unmurshal tasks")
+	}
+
+	if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
+		return nil, fmt.Errorf("cant unmurshal participants")
+	}
+
+	return &project, nil
 }
 func (repo *ProjectRepo) FindProjectByID(projectID string) (*domain.Project, error) {
 	sqlStr := `SELECT * FROM projects WHERE id = $1`
@@ -46,11 +68,11 @@ func (repo *ProjectRepo) FindProjectByID(projectID string) (*domain.Project, err
 	}
 
 	if err = json.Unmarshal(rawTasks, &project.Tasks); err != nil {
-		return nil, fmt.Errorf("cant unmurshal tasks")
+		return nil, fmt.Errorf("cant unmurshal tasks: %w", err)
 	}
 
 	if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
-		return nil, fmt.Errorf("cant unmurshal participants")
+		return nil, fmt.Errorf("cant unmurshal participants: %w", err)
 	}
 
 	return &project, nil

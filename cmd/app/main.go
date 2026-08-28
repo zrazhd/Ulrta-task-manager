@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpHandler "github.com/zrazhd/Ulrta-task-manager/internal/delivery/http"
-	"github.com/zrazhd/Ulrta-task-manager/internal/repository"
+	repository "github.com/zrazhd/Ulrta-task-manager/internal/repository/postgres"
 	"github.com/zrazhd/Ulrta-task-manager/internal/usecase"
 )
 
@@ -29,6 +29,10 @@ func main() {
 	userService := usecase.NewUserService(userRepo)
 	userHandler := httpHandler.NewUserHandler(userService)
 
+	projectRepo := repository.NewProjectRepo(pool)
+	projectService := usecase.NewProjectService(projectRepo)
+	projectHandler := httpHandler.NewProjectHandler(projectService)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /task", taskHandler.CreateTask)
@@ -40,6 +44,12 @@ func main() {
 	mux.HandleFunc("POST /register", userHandler.Register)
 	mux.HandleFunc("POST /login", userHandler.Login)
 	mux.HandleFunc("GET /users/{id}", userHandler.GetUser)
+
+	mux.HandleFunc("POST /project", projectHandler.CreateProject)
+	mux.HandleFunc("GET /project/{id}", projectHandler.GetProject)
+	mux.HandleFunc("PATCH /project/{id}", projectHandler.AddTask)
+	mux.HandleFunc("PATCH /project/{id}/{person}", projectHandler.AddParticipant)
+	mux.HandleFunc("DELETE /project/{id}", projectHandler.DeleteProject)
 
 	fmt.Println("Listening port :8080")
 	err = http.ListenAndServe(":8080", mux)

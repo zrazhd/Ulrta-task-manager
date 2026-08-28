@@ -9,7 +9,7 @@ import (
 
 type ProjectRepo interface {
 	SaveProject(p *domain.Project) error
-	DeleteProject(projectID string) error
+	DeleteProject(projectID string) (*domain.Project, error)
 	FindProjectByID(projectID string) (*domain.Project, error)
 	AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error)
 	AddParticipantToProject(projectID, userName string) error
@@ -25,10 +25,12 @@ func NewProjectService(repo ProjectRepo) *ProjectService {
 
 func (ps *ProjectService) CreateProject(title, description, owner string) (*domain.Project, error) {
 	project := &domain.Project{
-		ProjectID:   uuid.NewString(),
-		Title:       title,
-		Description: description,
-		Owner:       owner,
+		ProjectID:    uuid.NewString(),
+		Title:        title,
+		Description:  description,
+		Owner:        owner,
+		Tasks:        make([]domain.Task, 0),
+		Participants: make([]string, 0),
 	}
 
 	if err := project.ValidateProject(); err != nil {
@@ -43,7 +45,7 @@ func (ps *ProjectService) CreateProject(title, description, owner string) (*doma
 	return project, nil
 }
 
-func (ps *ProjectService) DeleteProject(projectID string) error {
+func (ps *ProjectService) DeleteProject(projectID string) (*domain.Project, error) {
 	return ps.repo.DeleteProject(projectID)
 }
 
