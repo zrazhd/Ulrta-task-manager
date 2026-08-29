@@ -8,20 +8,13 @@ import (
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
 )
 
-type TaskRepo interface {
-	CreateTask(*domain.Task) error
-	FindTaskByID(taskID string) (*domain.Task, error)
-	DeleteTask(taskID string) (*domain.Task, error)
-	AddCommentToTask(taskID string, com *domain.Comment) (*domain.Comment, error)
-	UpdateStatus(taskID, status string) error
-}
-
 type TaskService struct {
-	repo TaskRepo
+	repo  domain.TaskRepo
+	cache domain.CacheRepo[domain.Task]
 }
 
-func NewTaskService(repo TaskRepo) *TaskService {
-	return &TaskService{repo: repo}
+func NewTaskService(repo domain.TaskRepo, cache domain.CacheRepo[domain.Task]) *TaskService {
+	return &TaskService{repo: repo, cache: cache}
 }
 
 func (ts *TaskService) CreateTask(title, description, performer string, deadline time.Time) (*domain.Task, error) {

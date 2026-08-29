@@ -28,3 +28,9 @@ func (u *User) ValidateUser() error {
 	}
 	return nil
 }
+
+type UserRepo interface {
+	SaveUser(user *User) error
+	FindByEmail(email string) (*User, error)
+	FindByUserName(UserName string) (*User, error)
+}

@@ -7,20 +7,13 @@ import (
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
 )
 
-type ProjectRepo interface {
-	SaveProject(p *domain.Project) error
-	DeleteProject(projectID string) (*domain.Project, error)
-	FindProjectByID(projectID string) (*domain.Project, error)
-	AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error)
-	AddParticipantToProject(projectID, userName string) error
-}
-
 type ProjectService struct {
-	repo ProjectRepo
+	repo  domain.ProjectRepo
+	cache domain.CacheRepo[domain.Project]
 }
 
-func NewProjectService(repo ProjectRepo) *ProjectService {
-	return &ProjectService{repo: repo}
+func NewProjectService(repo domain.ProjectRepo, cache domain.CacheRepo[domain.Project]) *ProjectService {
+	return &ProjectService{repo: repo, cache: cache}
 }
 
 func (ps *ProjectService) CreateProject(title, description, owner string) (*domain.Project, error) {

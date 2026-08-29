@@ -1,6 +1,8 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+)
 
 type Project struct {
 	ProjectID    string
@@ -23,4 +25,12 @@ func (p *Project) ValidateProject() error {
 	}
 
 	return nil
+}
+
+type ProjectRepo interface {
+	SaveProject(p *Project) error
+	DeleteProject(projectID string) (*Project, error)
+	FindProjectByID(projectID string) (*Project, error)
+	AddTaskToProject(projectID string, task *Task) (*Task, error)
+	AddParticipantToProject(projectID, userName string) error
 }

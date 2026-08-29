@@ -35,3 +35,11 @@ func (t *Task) ValidateTask() error {
 
 	return nil
 }
+
+type TaskRepo interface {
+	CreateTask(*Task) error
+	FindTaskByID(taskID string) (*Task, error)
+	DeleteTask(taskID string) (*Task, error)
+	AddCommentToTask(taskID string, com *Comment) (*Comment, error)
+	UpdateStatus(taskID, status string) error
+}

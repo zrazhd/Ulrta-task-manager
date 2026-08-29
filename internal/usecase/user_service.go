@@ -2,26 +2,19 @@ package usecase
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserRepo interface {
-	SaveUser(user *domain.User) error
-	FindByEmail(email string) (*domain.User, error)
-	FindByUserName(UserName string) (*domain.User, error)
-}
-
 type UserService struct {
-	repo UserRepo
-	mu   sync.Mutex
+	repo  domain.UserRepo
+	cache domain.CacheRepo[domain.User]
 }
 
-func NewUserService(repo UserRepo) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo domain.UserRepo, cache domain.CacheRepo[domain.User]) *UserService {
+	return &UserService{repo: repo, cache: cache}
 }
 
 func (us *UserService) RegisterUser(name, email, password string) (*domain.User, error) {
