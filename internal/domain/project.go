@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 )
 
@@ -28,9 +29,9 @@ func (p *Project) ValidateProject() error {
 }
 
 type ProjectRepo interface {
-	SaveProject(p *Project) error
-	DeleteProject(projectID string) (*Project, error)
-	FindProjectByID(projectID string) (*Project, error)
-	AddTaskToProject(projectID string, task *Task) (*Task, error)
-	AddParticipantToProject(projectID, userName string) error
+	SaveProject(ctx context.Context, p *Project) error
+	DeleteProject(ctx context.Context, projectID string) error
+	FindProjectByID(ctx context.Context, projectID string) (*Project, error)
+	AddTaskToProject(ctx context.Context, projectID string, task *Task) (*Project, error)
+	AddParticipantToProject(ctx context.Context, projectID, userName string) (*Project, error)
 }

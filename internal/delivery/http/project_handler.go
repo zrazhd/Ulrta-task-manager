@@ -28,7 +28,7 @@ func (handler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	project, err := handler.service.CreateProject(req.Title, req.Description, req.Owner)
+	project, err := handler.service.CreateProject(r.Context(), req.Title, req.Description, req.Owner)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -47,7 +47,7 @@ func (handler *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Requ
 func (handler *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	projectID := r.PathValue("id")
 
-	project, err := handler.service.DeleteProject(projectID)
+	err := handler.service.DeleteProject(r.Context(), projectID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,18 +56,13 @@ func (handler *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 
-	if err = json.NewEncoder(w).Encode(project); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 }
 
 func (handler *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
 
 	projectID := r.PathValue("id")
 
-	project, err := handler.service.FindByID(projectID)
+	project, err := handler.service.FindByID(r.Context(), projectID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -93,7 +88,7 @@ func (handler *ProjectHandler) AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newTask, err := handler.service.AddTaskToProject(projectID, task)
+	newTask, err := handler.service.AddTaskToProject(r.Context(), projectID, task)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -113,11 +108,17 @@ func (handler *ProjectHandler) AddParticipant(w http.ResponseWriter, r *http.Req
 	projectID := r.PathValue("id")
 	userName := r.PathValue("person")
 
-	err := handler.service.AddPersonToProject(projectID, userName)
+	project, err := handler.service.AddPersonToProject(r.Context(), projectID, userName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(project); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

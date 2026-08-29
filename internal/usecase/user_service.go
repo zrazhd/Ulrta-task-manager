@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -17,7 +18,7 @@ func NewUserService(repo domain.UserRepo, cache domain.CacheRepo[domain.User]) *
 	return &UserService{repo: repo, cache: cache}
 }
 
-func (us *UserService) RegisterUser(name, email, password string) (*domain.User, error) {
+func (us *UserService) RegisterUser(ctx context.Context, name, email, password string) (*domain.User, error) {
 	newPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("Hashing password went wrong: %w", err)

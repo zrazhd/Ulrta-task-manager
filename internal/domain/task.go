@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -37,9 +38,9 @@ func (t *Task) ValidateTask() error {
 }
 
 type TaskRepo interface {
-	CreateTask(*Task) error
-	FindTaskByID(taskID string) (*Task, error)
-	DeleteTask(taskID string) (*Task, error)
-	AddCommentToTask(taskID string, com *Comment) (*Comment, error)
-	UpdateStatus(taskID, status string) error
+	CreateTask(ctx context.Context, t *Task) error
+	FindTaskByID(ctx context.Context, taskID string) (*Task, error)
+	DeleteTask(ctx context.Context, taskID string) error
+	AddCommentToTask(ctx context.Context, taskID string, com *Comment) (*Task, error)
+	UpdateStatus(ctx context.Context, taskID, status string) (*Task, error)
 }

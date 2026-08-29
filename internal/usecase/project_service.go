@@ -1,7 +1,9 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
@@ -16,7 +18,7 @@ func NewProjectService(repo domain.ProjectRepo, cache domain.CacheRepo[domain.Pr
 	return &ProjectService{repo: repo, cache: cache}
 }
 
-func (ps *ProjectService) CreateProject(title, description, owner string) (*domain.Project, error) {
+func (ps *ProjectService) CreateProject(ctx context.Context, title, description, owner string) (*domain.Project, error) {
 	project := &domain.Project{
 		ProjectID:    uuid.NewString(),
 		Title:        title,
@@ -30,26 +32,62 @@ func (ps *ProjectService) CreateProject(title, description, owner string) (*doma
 		return nil, fmt.Errorf("Invalid project: %w", err)
 	}
 
-	err := ps.repo.SaveProject(project)
+	err := ps.repo.SaveProject(ctx, project)
 	if err != nil {
 		return &domain.Project{}, fmt.Errorf("Can't save project: %w", err)
+	}
+	err = ps.cache.Set(context.Background(), project.ProjectID, project)
+	if err != nil {
+		log.Printf("cant set project to cache: %s", err)
 	}
 
 	return project, nil
 }
 
-func (ps *ProjectService) DeleteProject(projectID string) (*domain.Project, error) {
-	return ps.repo.DeleteProject(projectID)
+func (ps *ProjectService) DeleteProject(ctx context.Context, projectID string) error {
+	err := ps.cache.Del(context.Background(), projectID)
+	if err != nil {
+		return fmt.Errorf("can't delete project from cache: %w", err)
+	}
+	return ps.repo.DeleteProject(ctx, projectID)
 }
 
-func (ps *ProjectService) FindByID(projectID string) (*domain.Project, error) {
-	return ps.repo.FindProjectByID(projectID)
+func (ps *ProjectService) FindByID(ctx context.Context, projectID string) (*domain.Project, error) {
+	project, err := ps.cache.Get(context.Background(), projectID)
+	if err != nil {
+		log.Printf("something wrong with getting project in cache: %s", err)
+	}
+	if err == nil && project == nil {
+		return ps.repo.FindProjectByID(ctx, projectID)
+	} else {
+		return project, nil
+	}
+
 }
 
-func (ps *ProjectService) AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error) {
-	return ps.repo.AddTaskToProject(projectID, task)
+func (ps *ProjectService) AddTaskToProject(ctx context.Context, projectID string, task *domain.Task) (*domain.Project, error) {
+	project, err := ps.repo.AddTaskToProject(ctx, projectID, task)
+	if err != nil {
+		return nil, fmt.Errorf("Error adding task to project: %w", err)
+	}
+	err = ps.cache.Set(context.Background(), projectID, project)
+	if err != nil {
+		log.Printf("cant set project in cache after adding task: %s", err)
+	}
+
+	return project, nil
 }
 
-func (ps *ProjectService) AddPersonToProject(projectID, userName string) error {
-	return ps.repo.AddParticipantToProject(projectID, userName)
+func (ps *ProjectService) AddPersonToProject(ctx context.Context, projectID, userName string) (*domain.Project, error) {
+
+	project, err := ps.repo.AddParticipantToProject(ctx, projectID, userName)
+	if err != nil {
+		return nil, fmt.Errorf("Error adding participant to project: %w", err)
+	}
+	err = ps.cache.Set(context.Background(), projectID, project)
+	if err != nil {
+		log.Printf("cant set project in cache after adding task: %s", err)
+	}
+
+	return project, nil
 }

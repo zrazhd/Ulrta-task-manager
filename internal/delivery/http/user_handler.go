@@ -36,7 +36,7 @@ func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := handler.service.RegisterUser(req.Name, req.Email, req.Password)
+	user, err := handler.service.RegisterUser(r.Context(), req.Name, req.Email, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -71,7 +71,7 @@ func (handler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := handler.service.LoginUser(req.Email, req.Password)
+	user, err := handler.service.LoginUser(r.Context(), req.Email, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func (handler *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (handler *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userName := r.PathValue("username")
 
-	user, err := handler.service.FindUserByUserName(userName)
+	user, err := handler.service.FindUserByUserName(r.Context(), userName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

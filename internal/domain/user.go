@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 )
 
@@ -30,7 +31,7 @@ func (u *User) ValidateUser() error {
 }
 
 type UserRepo interface {
-	SaveUser(user *User) error
-	FindByEmail(email string) (*User, error)
-	FindByUserName(UserName string) (*User, error)
+	SaveUser(ctx context.Context, user *User) error
+	FindByEmail(ctx context.Context, email string) (*User, error)
+	FindByUserName(ctx context.Context, UserName string) (*User, error)
 }

@@ -31,7 +31,7 @@ func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := th.service.CreateTask(odt.Title, odt.Description, odt.Performer, odt.Deadline)
+	task, err := th.service.CreateTask(r.Context(), odt.Title, odt.Description, odt.Performer, odt.Deadline)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -50,26 +50,19 @@ func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 func (th *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	taskID := r.PathValue("id")
 
-	task, err := th.service.DeleteTaskByID(taskID)
-	if err != nil {
+	if err := th.service.DeleteTaskByID(r.Context(), taskID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	if err = json.NewEncoder(w).Encode(&task); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 
 }
 
 func (th *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 	taskID := r.PathValue("id")
 
-	task, err := th.service.FindTask(taskID)
+	task, err := th.service.FindTask(r.Context(), taskID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -100,7 +93,7 @@ func (th *TaskHandler) AddCommentToTask(w http.ResponseWriter, r *http.Request) 
 		Message: req.Message,
 	}
 
-	task, err := th.service.AddCommentToTask(taskID, &com)
+	task, err := th.service.AddCommentToTask(r.Context(), taskID, &com)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -126,10 +119,17 @@ func (th *TaskHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := th.service.UpdateStatus(taskID, req.Status); err != nil {
+	task, err := th.service.UpdateStatus(r.Context(), taskID, req.Status)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	if err = json.NewEncoder(w).Encode(task); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
