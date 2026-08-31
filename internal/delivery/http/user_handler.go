@@ -18,6 +18,7 @@ func NewUserHandler(service *usecase.UserService) *UserHandler {
 type registerRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
+	UserName string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -36,7 +37,7 @@ func (handler *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := handler.service.RegisterUser(r.Context(), req.Name, req.Email, req.Password)
+	user, err := handler.service.RegisterUser(r.Context(), req.Name, req.Email, req.UserName, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

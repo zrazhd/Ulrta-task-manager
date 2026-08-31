@@ -36,7 +36,7 @@ func (ps *ProjectService) CreateProject(ctx context.Context, title, description,
 	if err != nil {
 		return &domain.Project{}, fmt.Errorf("Can't save project: %w", err)
 	}
-	err = ps.cache.Set(context.Background(), project.ProjectID, project)
+	err = ps.cache.Set(ctx, project.ProjectID, project)
 	if err != nil {
 		log.Printf("cant set project to cache: %s", err)
 	}
@@ -72,7 +72,7 @@ func (ps *ProjectService) AddTaskToProject(ctx context.Context, projectID string
 	}
 	err = ps.cache.Set(context.Background(), projectID, project)
 	if err != nil {
-		log.Printf("cant set project in cache after adding task: %s", err)
+		return nil, fmt.Errorf("cant set project in cache after adding task: %w", err)
 	}
 
 	return project, nil
@@ -86,7 +86,7 @@ func (ps *ProjectService) AddPersonToProject(ctx context.Context, projectID, use
 	}
 	err = ps.cache.Set(context.Background(), projectID, project)
 	if err != nil {
-		log.Printf("cant set project in cache after adding task: %s", err)
+		return nil, fmt.Errorf("cant set project in cache after adding task: %s", err)
 	}
 
 	return project, nil

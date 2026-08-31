@@ -59,13 +59,37 @@ func (ts *TaskService) DeleteTaskByID(ctx context.Context, taskID string) error 
 }
 
 func (ts *TaskService) FindTask(ctx context.Context, taskID string) (*domain.Task, error) {
+	task, err := ts.cache.Get(ctx, taskID)
+	if err == nil && task != nil {
+		return task, nil
+	}
+	if err != nil {
+		log.Printf("cannot get task from cache: %s", err)
+	}
 	return ts.repo.FindTaskByID(ctx, taskID)
 }
-
 func (ts *TaskService) AddCommentToTask(ctx context.Context, taskID string, com *domain.Comment) (*domain.Task, error) {
-	return ts.repo.AddCommentToTask(ctx, taskID, com)
+	task, err := ts.repo.AddCommentToTask(ctx, taskID, com)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add comment to task: %w", err)
+	}
+
+	if err = ts.cache.Set(ctx, taskID, task); err != nil {
+		return nil, fmt.Errorf("cannot add comment to task: %w", err)
+	}
+
+	return task, nil
 }
 
 func (ts *TaskService) UpdateStatus(ctx context.Context, taskID, status string) (*domain.Task, error) {
-	return ts.repo.UpdateStatus(ctx, taskID, status)
+	task, err := ts.repo.UpdateStatus(ctx, taskID, status)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update status in task: %w", err)
+	}
+
+	if err = ts.cache.Set(ctx, taskID, task); err != nil {
+		return nil, fmt.Errorf("cannot update status in task cache: %w", err)
+	}
+
+	return task, nil
 }

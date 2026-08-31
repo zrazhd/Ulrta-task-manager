@@ -17,7 +17,7 @@ func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (repo *UserRepo) SaveUser(user *domain.User) error {
+func (repo *UserRepo) SaveUser(ctx context.Context, user *domain.User) error {
 	projects, err := json.Marshal(user.Projects)
 	if err != nil {
 		return fmt.Errorf("cannot marshal user: %w", err)
@@ -25,17 +25,17 @@ func (repo *UserRepo) SaveUser(user *domain.User) error {
 
 	sqlStr := `INSERT INTO users(id, name, username, email, password, projects) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err = repo.db.Exec(context.Background(), sqlStr, user.UserID, user.Name, user.UserName, user.Email, user.Password, projects)
+	_, err = repo.db.Exec(ctx, sqlStr, user.UserID, user.Name, user.UserName, user.Email, user.Password, projects)
 
 	return err
 }
-func (repo *UserRepo) FindByEmail(email string) (*domain.User, error) {
+func (repo *UserRepo) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
 	var rawProjects []byte
 
-	sqlStr := `SELECT id, name, username, email, projects FROM users WHERE email = $1`
+	sqlStr := `SELECT id, name, username, email, password, projects FROM users WHERE email = $1`
 
-	err := repo.db.QueryRow(context.Background(), sqlStr, email).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &rawProjects)
+	err := repo.db.QueryRow(ctx, sqlStr, email).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &user.Password, &rawProjects)
 	if err != nil {
 		return nil, fmt.Errorf("can't find user by email: %w", err)
 	}
@@ -47,13 +47,13 @@ func (repo *UserRepo) FindByEmail(email string) (*domain.User, error) {
 	return &user, nil
 }
 
-func (repo *UserRepo) FindByUserName(userName string) (*domain.User, error) {
+func (repo *UserRepo) FindByUserName(ctx context.Context, userName string) (*domain.User, error) {
 	var user domain.User
 	var rawProjects []byte
 
 	sqlStr := `SELECT id, name, username, email, projects FROM users WHERE username = $1`
 
-	err := repo.db.QueryRow(context.Background(), sqlStr, userName).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &rawProjects)
+	err := repo.db.QueryRow(ctx, sqlStr, userName).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &rawProjects)
 	if err != nil {
 		return nil, fmt.Errorf("can't find user by email: %w", err)
 	}

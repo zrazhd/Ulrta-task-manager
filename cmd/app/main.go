@@ -5,32 +5,46 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	httpHandler "github.com/zrazhd/Ulrta-task-manager/internal/delivery/http"
+	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
 	repository "github.com/zrazhd/Ulrta-task-manager/internal/repository/postgres"
+	cache "github.com/zrazhd/Ulrta-task-manager/internal/repository/redis"
 	"github.com/zrazhd/Ulrta-task-manager/internal/usecase"
 )
 
 func main() {
 	ctx := context.Background()
 	connStr := "postgres://postgres:password@localhost:5432/postgres?sslmode=disable"
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	defer client.Close()
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		log.Fatalf("Cannot connect to Database: %s", err)
 	}
 
-	repo := repository.NewTaskRepo(pool)
-	taskService := usecase.NewTaskService(repo)
+	taskCache := cache.NewCache[domain.Task](client, "task", time.Duration(time.Second*60))
+	userCache := cache.NewCache[domain.User](client, "user", time.Duration(time.Second*60))
+	projectCache := cache.NewCache[domain.Project](client, "project", time.Duration(time.Second*60))
+
+	taskRepo := repository.NewTaskRepo(pool)
+	taskService := usecase.NewTaskService(taskRepo, taskCache)
 	taskHandler := httpHandler.NewTaskHandler(taskService)
 
 	userRepo := repository.NewUserRepo(pool)
-	userService := usecase.NewUserService(userRepo)
+	userService := usecase.NewUserService(userRepo, userCache)
 	userHandler := httpHandler.NewUserHandler(userService)
 
 	projectRepo := repository.NewProjectRepo(pool)
-	projectService := usecase.NewProjectService(projectRepo)
+	projectService := usecase.NewProjectService(projectRepo, projectCache)
 	projectHandler := httpHandler.NewProjectHandler(projectService)
 
 	mux := http.NewServeMux()

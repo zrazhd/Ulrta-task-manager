@@ -6,12 +6,12 @@ import (
 )
 
 type User struct {
-	UserID   string
-	Name     string
-	UserName string
-	Email    string
-	Password string
-	Projects []Project
+	UserID   string    `json:"id"`
+	Name     string    `json:"name"`
+	UserName string    `json:"username"`
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Projects []Project `json:"projects"`
 }
 
 func (u *User) ValidateUser() error {

@@ -25,13 +25,13 @@ type CreateTaskReq struct {
 }
 
 func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
-	var odt CreateTaskReq
-	if err := json.NewDecoder(r.Body).Decode(&odt); err != nil {
+	var dto CreateTaskReq
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	task, err := th.service.CreateTask(r.Context(), odt.Title, odt.Description, odt.Performer, odt.Deadline)
+	task, err := th.service.CreateTask(r.Context(), dto.Title, dto.Description, dto.Performer, dto.Deadline)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

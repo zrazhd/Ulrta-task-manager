@@ -17,7 +17,7 @@ func NewProjectRepo(db *pgxpool.Pool) *ProjectRepo {
 	return &ProjectRepo{db: db}
 }
 
-func (repo *ProjectRepo) SaveProject(p *domain.Project) error {
+func (repo *ProjectRepo) SaveProject(ctx context.Context, p *domain.Project) error {
 
 	sqlStr := `INSERT INTO projects (id, title, description, owner, tasks, participants) VALUES($1, $2, $3, $4, $5, $6)`
 
@@ -26,43 +26,31 @@ func (repo *ProjectRepo) SaveProject(p *domain.Project) error {
 		return fmt.Errorf("cant marshal task creating project: %w", err)
 	}
 
-	participants, err := json.Marshal(p.Participants)
-	if err != nil {
-		return fmt.Errorf("cant marshal participants creating project: %w", err)
-	}
+	// participants, err := json.Marshal(p.Participants)
+	// if err != nil {
+	// 	return fmt.Errorf("cant marshal participants creating project: %w", err)
+	// }
 
-	_, err = repo.db.Exec(context.Background(), sqlStr, p.ProjectID, p.Title, p.Description, p.Owner, tasks, participants)
+	_, err = repo.db.Exec(ctx, sqlStr, p.ProjectID, p.Title, p.Description, p.Owner, tasks, p.Participants)
 
 	return err
 }
-func (repo *ProjectRepo) DeleteProject(projectID string) (*domain.Project, error) {
+func (repo *ProjectRepo) DeleteProject(ctx context.Context, projectID string) error {
 
-	sqlStr := `DELETE FROM projects WHERE id = $1 RETURNING *`
+	sqlStr := `DELETE FROM projects WHERE id = $1`
 
-	var project domain.Project
-	var rawTasks []byte
-	var rawParticipants []byte
+	_, err := repo.db.Exec(ctx, sqlStr, projectID)
 
-	err := repo.db.QueryRow(context.Background(), sqlStr, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &rawParticipants)
-
-	if err = json.Unmarshal(rawTasks, &project.Tasks); err != nil {
-		return nil, fmt.Errorf("cant unmurshal tasks")
-	}
-
-	if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
-		return nil, fmt.Errorf("cant unmurshal participants")
-	}
-
-	return &project, nil
+	return err
 }
-func (repo *ProjectRepo) FindProjectByID(projectID string) (*domain.Project, error) {
+func (repo *ProjectRepo) FindProjectByID(ctx context.Context, projectID string) (*domain.Project, error) {
 	sqlStr := `SELECT * FROM projects WHERE id = $1`
 
 	var project domain.Project
 	var rawTasks []byte
-	var rawParticipants []byte
+	// var rawParticipants []byte
 
-	err := repo.db.QueryRow(context.Background(), sqlStr, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &rawParticipants)
+	err := repo.db.QueryRow(ctx, sqlStr, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &project.Participants)
 	if err != nil {
 		return nil, fmt.Errorf("cant get project from database: %w", err)
 	}
@@ -71,17 +59,17 @@ func (repo *ProjectRepo) FindProjectByID(projectID string) (*domain.Project, err
 		return nil, fmt.Errorf("cant unmurshal tasks: %w", err)
 	}
 
-	if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
-		return nil, fmt.Errorf("cant unmurshal participants: %w", err)
-	}
+	// if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
+	// 	return nil, fmt.Errorf("cant unmurshal participants: %w", err)
+	// }
 
 	return &project, nil
 }
-func (repo *ProjectRepo) AddTaskToProject(projectID string, task *domain.Task) (*domain.Task, error) {
+func (repo *ProjectRepo) AddTaskToProject(ctx context.Context, projectID string, task *domain.Task) (*domain.Project, error) {
 	slqStr := "SELECT tasks FROM projects WHERE id = $1"
 	var oldRawTasks []byte
 	var tasks []domain.Task
-	err := repo.db.QueryRow(context.Background(), slqStr, projectID).Scan(&oldRawTasks)
+	err := repo.db.QueryRow(ctx, slqStr, projectID).Scan(&oldRawTasks)
 	if err != nil {
 		return nil, fmt.Errorf("can't get tasks from database: %w", err)
 	}
@@ -97,20 +85,47 @@ func (repo *ProjectRepo) AddTaskToProject(projectID string, task *domain.Task) (
 		return nil, fmt.Errorf("can't marhal new tasks in projects: %w", err)
 	}
 
-	sqlString := `UPDATE projects SET tasks = $1 WHERE id = $2`
+	sqlString := `UPDATE projects SET tasks = $1 WHERE id = $2 RETURNING *`
 
-	_, err = repo.db.Exec(context.Background(), sqlString, newTasks, projectID)
+	var project domain.Project
+	var rawTasks []byte
+	// var rawParticipants []byte
+
+	err = repo.db.QueryRow(ctx, sqlString, newTasks, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &project.Participants)
 	if err != nil {
-		return nil, fmt.Errorf("cant update tasks in database: %w", err)
+		return nil, fmt.Errorf("cant get project from database: %w", err)
 	}
 
-	return task, nil
+	if err = json.Unmarshal(rawTasks, &project.Tasks); err != nil {
+		return nil, fmt.Errorf("cant unmurshal tasks: %w", err)
+	}
+
+	// if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
+	// 	return nil, fmt.Errorf("cant unmurshal participants: %w", err)
+	// }
+
+	return &project, nil
 }
-func (repo *ProjectRepo) AddParticipantToProject(projectID, userName string) error {
+func (repo *ProjectRepo) AddParticipantToProject(ctx context.Context, projectID, userName string) (*domain.Project, error) {
 
-	slqStr := `UPDATE projects SET participants = array_append(participants, $1) WHERE id = $2`
+	var project domain.Project
+	var rawTasks []byte
+	// var rawParticipants []byte
 
-	_, err := repo.db.Exec(context.Background(), slqStr, userName, projectID)
+	slqStr := `UPDATE projects SET participants = array_append(participants, $1) WHERE id = $2 RETURNING *`
 
-	return err
+	err := repo.db.QueryRow(ctx, slqStr, userName, projectID).Scan(&project.ProjectID, &project.Title, &project.Description, &project.Owner, &rawTasks, &project.Participants)
+	if err != nil {
+		return nil, fmt.Errorf("cant get project from database: %w", err)
+	}
+
+	if err = json.Unmarshal(rawTasks, &project.Tasks); err != nil {
+		return nil, fmt.Errorf("cant unmurshal tasks: %w", err)
+	}
+
+	// if err = json.Unmarshal(rawParticipants, &project.Participants); err != nil {
+	// 	return nil, fmt.Errorf("cant unmurshal participants: %w", err)
+	// }
+
+	return &project, nil
 }
