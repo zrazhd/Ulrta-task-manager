@@ -8,15 +8,25 @@ import (
 
 type Task struct {
 	TaskID      string
+	ProjectID   string
+	CreatorID   string
 	Title       string
 	Description string
 	Performer   string
 	Status      string
 	Deadline    time.Time
-	Comments    []Comment
 }
 
 func (t *Task) ValidateTask() error {
+	if t.TaskID == "" {
+		return errors.New("There is no Task ID")
+	}
+	if t.ProjectID == "" {
+		return errors.New("There is no Project ID")
+	}
+	if t.CreatorID == "" {
+		return errors.New("There is no Creator ID")
+	}
 
 	if t.Title == "" {
 		return errors.New("There is no title")

@@ -6,15 +6,17 @@ import (
 )
 
 type User struct {
-	UserID   string    `json:"id"`
-	Name     string    `json:"name"`
-	UserName string    `json:"username"`
-	Email    string    `json:"email"`
-	Password string    `json:"password"`
-	Projects []Project `json:"projects"`
+	UserID   string `json:"id"`
+	Name     string `json:"name"`
+	UserName string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (u *User) ValidateUser() error {
+	if u.UserID == "" {
+		return errors.New("There is no User ID")
+	}
 	if u.Name == "" {
 		return errors.New("There is no name")
 	}

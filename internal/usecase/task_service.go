@@ -19,13 +19,15 @@ func NewTaskService(repo domain.TaskRepo, cache domain.CacheRepo[domain.Task]) *
 	return &TaskService{repo: repo, cache: cache}
 }
 
-func (ts *TaskService) CreateTask(ctx context.Context, title, description, performer string, deadline time.Time) (*domain.Task, error) {
+func (ts *TaskService) CreateTask(ctx context.Context, projectID, creatorID, title, description, performer string, deadline time.Time) (*domain.Task, error) {
 	task := &domain.Task{
 		TaskID:      uuid.NewString(),
+		ProjectID:   projectID,
+		CreatorID:   creatorID,
 		Title:       title,
 		Description: description,
 		Performer:   performer,
-		Status:      "to do",
+		Status:      "Not Started",
 		Deadline:    deadline,
 	}
 

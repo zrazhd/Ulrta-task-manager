@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
@@ -18,30 +18,21 @@ func NewUserRepo(db *pgxpool.Pool) *UserRepo {
 }
 
 func (repo *UserRepo) SaveUser(ctx context.Context, user *domain.User) error {
-	projects, err := json.Marshal(user.Projects)
-	if err != nil {
-		return fmt.Errorf("cannot marshal user: %w", err)
-	}
 
-	sqlStr := `INSERT INTO users(id, name, username, email, password, projects) VALUES ($1, $2, $3, $4, $5, $6)`
+	sqlStr := `INSERT INTO users(user_id, name, username, email, password_hash, created_at) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	_, err = repo.db.Exec(ctx, sqlStr, user.UserID, user.Name, user.UserName, user.Email, user.Password, projects)
+	_, err := repo.db.Exec(ctx, sqlStr, user.UserID, user.Name, user.UserName, user.Email, user.Password, time.Now())
 
 	return err
 }
 func (repo *UserRepo) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	var rawProjects []byte
 
-	sqlStr := `SELECT id, name, username, email, password, projects FROM users WHERE email = $1`
+	sqlStr := `SELECT id, name, username, email FROM users WHERE email = $1`
 
-	err := repo.db.QueryRow(ctx, sqlStr, email).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &user.Password, &rawProjects)
+	err := repo.db.QueryRow(ctx, sqlStr, email).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("can't find user by email: %w", err)
-	}
-	err = json.Unmarshal(rawProjects, &user.Projects)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal users projects: %w", err)
 	}
 
 	return &user, nil
@@ -49,17 +40,12 @@ func (repo *UserRepo) FindByEmail(ctx context.Context, email string) (*domain.Us
 
 func (repo *UserRepo) FindByUserName(ctx context.Context, userName string) (*domain.User, error) {
 	var user domain.User
-	var rawProjects []byte
 
-	sqlStr := `SELECT id, name, username, email, projects FROM users WHERE username = $1`
+	sqlStr := `SELECT user_id, name, username, email FROM users WHERE username = $1`
 
-	err := repo.db.QueryRow(ctx, sqlStr, userName).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email, &rawProjects)
+	err := repo.db.QueryRow(ctx, sqlStr, userName).Scan(&user.UserID, &user.Name, &user.UserName, &user.Email)
 	if err != nil {
 		return nil, fmt.Errorf("can't find user by email: %w", err)
-	}
-	err = json.Unmarshal(rawProjects, &user.Projects)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal users projects: %w", err)
 	}
 
 	return &user, nil
