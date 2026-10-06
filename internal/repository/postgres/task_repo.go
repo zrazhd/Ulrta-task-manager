@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -44,27 +43,14 @@ func (repo *TaskRepo) DeleteTask(ctx context.Context, taskID string) error {
 
 	return err
 }
-func (repo *TaskRepo) CreateCommentToTask(ctx context.Context, com *domain.Comment) error {
 
-	sqlStr := `INSERT INTO comments(comment_id, task_id, creator_id, message) VALUES($1, $2, $3, $4) `
-
-	_, err := repo.db.Exec(ctx, sqlStr, com.CommentID, com.TaskID, com.CreatorID, com.Message)
-
-	return err
-}
 func (repo *TaskRepo) UpdateStatus(ctx context.Context, taskID, status string) (*domain.Task, error) {
-	sqlStr := `UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *`
+	sqlStr := `UPDATE tasks SET status = $1 WHERE id = $2 RETURNING task_id, project_id, creator_id, title, decription, performer, status, deadline`
 
 	var task domain.Task
-	var rawComments []byte
-
-	err := repo.db.QueryRow(context.Background(), sqlStr, status, taskID).Scan(&task.TaskID, &task.Title, &task.Description, &task.Performer, &task.Status, &task.Deadline, &rawComments)
+	err := repo.db.QueryRow(context.Background(), sqlStr, status, taskID).Scan(&task.TaskID, &task.ProjectID, &task.CreatorID, &task.Title, &task.Description, &task.Performer, &task.Status, &task.Deadline)
 	if err != nil {
 		return nil, fmt.Errorf("cannot update status in task: %w", err)
-	}
-
-	if err = json.Unmarshal(rawComments, &task.Comments); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal comments in task updating status: %w", err)
 	}
 
 	return &task, nil

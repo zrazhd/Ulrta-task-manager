@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zrazhd/Ulrta-task-manager/internal/domain"
 	"github.com/zrazhd/Ulrta-task-manager/internal/usecase"
 )
 
@@ -18,6 +17,8 @@ func NewTaskHandler(service *usecase.TaskService) *TaskHandler {
 }
 
 type CreateTaskReq struct {
+	ProjectID   string
+	CreatorID   string
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	Performer   string    `json:"performer"`
@@ -31,7 +32,7 @@ func (th *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, err := th.service.CreateTask(r.Context(), dto.Title, dto.Description, dto.Performer, dto.Deadline)
+	task, err := th.service.CreateTask(r.Context(), dto.ProjectID, dto.CreatorID, dto.Title, dto.Description, dto.Performer, dto.Deadline)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -75,37 +76,6 @@ func (th *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-}
-
-func (th *TaskHandler) AddCommentToTask(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Sender  string `json:"sender"`
-		Message string `json:"message"`
-	}
-	taskID := r.PathValue("id")
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	com := domain.Comment{
-		Sender:  req.Sender,
-		Message: req.Message,
-	}
-
-	task, err := th.service.AddCommentToTask(r.Context(), taskID, &com)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	if err = json.NewEncoder(w).Encode(task); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 func (th *TaskHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {

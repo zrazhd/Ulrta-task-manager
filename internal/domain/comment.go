@@ -1,12 +1,17 @@
 package domain
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"time"
+)
 
 type Comment struct {
 	CommentID string
 	TaskID    string
 	CreatorID string
 	Message   string
+	CreatedAt time.Time
 }
 
 func (c *Comment) ValidateComment() error {
@@ -24,4 +29,9 @@ func (c *Comment) ValidateComment() error {
 	}
 
 	return nil
+}
+
+type CommentRepo interface {
+	CreateComment(ctx context.Context, com *Comment) error
+	CommentsByTaskID(ctx context.Context, taskID string) ([]Comment, error)
 }

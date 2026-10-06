@@ -31,7 +31,6 @@ func (us *UserService) RegisterUser(ctx context.Context, name, email, username, 
 		Email:    email,
 		UserName: username,
 		Password: string(newPassword),
-		Projects: make([]domain.Project, 0),
 	}
 	if err = user.ValidateUser(); err != nil {
 		return nil, fmt.Errorf("Invalid user: %w", err)

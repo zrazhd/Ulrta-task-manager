@@ -70,18 +70,6 @@ func (ts *TaskService) FindTask(ctx context.Context, taskID string) (*domain.Tas
 	}
 	return ts.repo.FindTaskByID(ctx, taskID)
 }
-func (ts *TaskService) AddCommentToTask(ctx context.Context, taskID string, com *domain.Comment) (*domain.Task, error) {
-	task, err := ts.repo.AddCommentToTask(ctx, taskID, com)
-	if err != nil {
-		return nil, fmt.Errorf("cannot add comment to task: %w", err)
-	}
-
-	if err = ts.cache.Set(ctx, taskID, task); err != nil {
-		return nil, fmt.Errorf("cannot add comment to task: %w", err)
-	}
-
-	return task, nil
-}
 
 func (ts *TaskService) UpdateStatus(ctx context.Context, taskID, status string) (*domain.Task, error) {
 	task, err := ts.repo.UpdateStatus(ctx, taskID, status)

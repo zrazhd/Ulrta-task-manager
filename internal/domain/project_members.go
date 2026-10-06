@@ -1,11 +1,16 @@
 package domain
 
-import "errors"
+import (
+	"context"
+	"errors"
+	"time"
+)
 
 type ProjectMember struct {
 	ProjectID string
 	UserID    string
 	Role      string
+	CreatedAt time.Time
 }
 
 func (pm *ProjectMember) Validate() error {
@@ -19,4 +24,12 @@ func (pm *ProjectMember) Validate() error {
 		return errors.New("Wrong Role")
 	}
 	return nil
+}
+
+type ProjectMemberRepo interface {
+	AddMember(ctx context.Context, pm *ProjectMember) error
+	ListMembers(ctx context.Context, projectID string) ([]ProjectMember, error)
+	ChangeRole(ctx context.Context, pm *ProjectMember) error
+	GetRole(ctx context.Context, projectID, userID string) (string, error)
+	GetMember(ctx context.Context, projectID, userID string) (*ProjectMember, error)
 }

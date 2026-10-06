@@ -29,6 +29,4 @@ type ProjectRepo interface {
 	SaveProject(ctx context.Context, p *Project) error
 	DeleteProject(ctx context.Context, projectID string) error
 	FindProjectByID(ctx context.Context, projectID string) (*Project, error)
-	AddTaskToProject(ctx context.Context, projectID string, task *Task) (*Project, error)
-	AddParticipantToProject(ctx context.Context, projectID, userName string) (*Project, error)
 }

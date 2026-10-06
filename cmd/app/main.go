@@ -52,7 +52,7 @@ func main() {
 	mux.HandleFunc("POST /task", taskHandler.CreateTask)
 	mux.HandleFunc("GET /task/{id}", taskHandler.GetTask)
 	mux.HandleFunc("DELETE /task/{id}", taskHandler.DeleteTask)
-	mux.HandleFunc("PATCH /task/{id}/comment", taskHandler.AddCommentToTask)
+	mux.HandleFunc("PATCH /task/{id}/comment", taskHandler.DeleteTask)
 	mux.HandleFunc("PATCH /task/{id}/status", taskHandler.UpdateStatus)
 
 	mux.HandleFunc("POST /register", userHandler.Register)
@@ -61,9 +61,11 @@ func main() {
 
 	mux.HandleFunc("POST /project", projectHandler.CreateProject)
 	mux.HandleFunc("GET /project/{id}", projectHandler.GetProject)
-	mux.HandleFunc("PATCH /project/{id}", projectHandler.AddTask)
-	mux.HandleFunc("PATCH /project/{id}/{person}", projectHandler.AddParticipant)
 	mux.HandleFunc("DELETE /project/{id}", projectHandler.DeleteProject)
+
+	mux.HandleFunc("POST /project/{id}/members", projectHandler.DeleteProject)
+	mux.HandleFunc("GET /project/{id}/members", projectHandler.DeleteProject)
+	mux.HandleFunc("PATCH /project/{id}/members/{userID}", projectHandler.DeleteProject)
 
 	fmt.Println("Listening port :8080")
 	err = http.ListenAndServe(":8080", mux)

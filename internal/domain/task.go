@@ -27,7 +27,6 @@ func (t *Task) ValidateTask() error {
 	if t.CreatorID == "" {
 		return errors.New("There is no Creator ID")
 	}
-
 	if t.Title == "" {
 		return errors.New("There is no title")
 	}
@@ -51,6 +50,5 @@ type TaskRepo interface {
 	CreateTask(ctx context.Context, t *Task) error
 	FindTaskByID(ctx context.Context, taskID string) (*Task, error)
 	DeleteTask(ctx context.Context, taskID string) error
-	AddCommentToTask(ctx context.Context, taskID string, com *Comment) (*Task, error)
 	UpdateStatus(ctx context.Context, taskID, status string) (*Task, error)
 }
